@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHK - Current Holdings Keeper | Gestión de Taller</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { background-color: #f8fafc; color: #0f172a; padding: 2rem 1rem; display: flex; justify-content: center; }
+    .app-container { width: 100%; max-width: 1100px; background: #ffffff; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; overflow: hidden; }
+    header { background: #1e293b; color: #ffffff; padding: 1.5rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    header h1 { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+    header h1 span { background: #2563eb; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; letter-spacing: 1px; }
+    header p { font-size: 0.875rem; color: #94a3b8; }
+    .nav-tabs { display: flex; background-color: #f1f5f9; border-bottom: 1px solid #e2e8f0; padding: 0 1rem; gap: 0.5rem; overflow-x: auto; }
+    .tab-btn { padding: 1rem 1.25rem; border: none; background: transparent; font-weight: 600; font-size: 0.9rem; color: #64748b; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s ease; white-space: nowrap; }
+    .tab-btn:hover { color: #2563eb; }
+    .tab-btn.active { color: #2563eb; background: #ffffff; border-bottom-color: #2563eb; }
+    .tab-content { display: none; padding: 2rem; }
+    .tab-content.active { display: block; }
+    .section-header { margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; }
+    .section-header div h2 { font-size: 1.25rem; color: #0f172a; }
+    .section-header div p { font-size: 0.875rem; color: #64748b; }
+    .table-responsive { width: 100%; overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.925rem; }
+    th { background-color: #f8fafc; color: #64748b; font-weight: 600; padding: 0.75rem 1rem; border-bottom: 1px solid #e2e8f0; }
+    td { padding: 0.875rem 1rem; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background-color: #f8fafc; }
+    .badge { display: inline-block; padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+    .badge-disponible { background-color: #dcfce7; color: #166534; }
+    .badge-bajo { background-color: #fef3c7; color: #92400e; }
+    .badge-agotado { background-color: #fee2e2; color: #991b1b; }
+    .badge-completado { background-color: #dcfce7; color: #166534; }
+    .badge-fallido { background-color: #fee2e2; color: #991b1b; }
+    .empty-state { text-align: center; color: #64748b; padding: 2rem !important; }
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; max-width: 600px; }
+    .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .form-group label { font-size: 0.875rem; font-weight: 600; color: #0f172a; }
+    input[type="text"], input[type="number"], input[type="file"], select { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; outline: none; transition: border-color 0.2s ease; background-color: #ffffff; }
+    input:focus, select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+    .checkbox-group { flex-direction: row; align-items: center; gap: 0.5rem; cursor: pointer; }
+    .checkbox-group input { width: 18px; height: 18px; cursor: pointer; }
+    .btn-submit { background-color: #2563eb; color: #ffffff; padding: 0.85rem 1.5rem; border: none; border-radius: 6px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: background-color 0.2s ease; margin-top: 0.5rem; }
+    .btn-submit:hover { background-color: #1d4ed8; }
+    .btn-tool { background-color: #0f172a; color: #ffffff; padding: 0.6rem 1rem; border: none; border-radius: 6px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: background-color 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; }
+    .btn-tool:hover { background-color: #334155; }
+    .btn-action { padding: 0.4rem 0.75rem; border: none; border-radius: 4px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-right: 0.3rem; }
+    .btn-edit { background-color: #f59e0b; color: #ffffff; }
+    .btn-edit:hover { background-color: #d97706; }
+    .btn-delete { background-color: #ef4444; color: #ffffff; }
+    .btn-delete:hover { background-color: #dc2626; }
+    .alert-box { display: none; margin-bottom: 1.5rem; padding: 1.25rem; border-radius: 8px; border: 1px solid transparent; font-size: 0.925rem; }
+    .alert-box.danger { display: block; background-color: #fef2f2; border-color: #fecaca; color: #991b1b; }
+    .alert-box.success { display: block; background-color: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+    .alert-title { font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem; }
+    .alert-details { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed #fecaca; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem; }
+    .alert-metric { display: flex; flex-direction: column; }
+    .alert-metric-title { font-size: 0.75rem; text-transform: uppercase; opacity: 0.8; }
+    .alert-metric-value { font-size: 1.1rem; font-weight: 700; }
+    .highlight-faltante { color: #dc2626; font-size: 1.25rem; }
+    .img-thumbnail { width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1; background-color: #f1f5f9; }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-overlay.active { display: flex; }
+    .modal-card { background: #ffffff; padding: 2rem; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 1.25rem; }
+    .modal-card h3 { font-size: 1.2rem; color: #0f172a; }
+    .modal-buttons { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem; }
+    .btn-cancel { background-color: #cbd5e1; color: #0f172a; padding: 0.6rem 1.2rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    .btn-cancel:hover { background-color: #94a3b8; }
+    @media print {
+      body { background: #ffffff; color: #000000; padding: 0; }
+      .app-container { box-shadow: none; border: none; max-width: 100%; }
+      .nav-tabs, .btn-action, .btn-submit, .btn-tool, form, header, .section-header button { display: none !important; }
+      .tab-content { display: none !important; }
+      .tab-content.active { display: block !important; padding: 0 !important; }
+      table { width: 100%; border: 1px solid #000; }
+      th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MODAL DE EDICIÓN DE CARRETE -->
+  <div id="modal-editar" class="modal-overlay">
+    <div class="modal-card">
+      <h3 id="modal-titulo">Editar Carrete</h3>
+      <div class="form-group">
+        <label for="modal-input-peso">Peso Actual (Gramos)</label>
+        <input type="number" id="modal-input-peso" step="0.1">
+      </div>
+      <div class="form-group">
+        <label for="modal-input-imagen">Cambiar o Añadir Fotografía (Opcional)</label>
+        <input type="file" id="modal-input-imagen" accept="image/*">
+      </div>
+      <div class="modal-buttons">
+        <button type="button" class="btn-cancel" onclick="cerrarModalEditar()">Cancelar</button>
+        <button type="button" class="btn-submit" style="margin-top:0;" onclick="guardarEdicionCarrete()">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <header>
+      <div>
+        <h1>CHK <span>Current Holdings Keeper</span></h1>
+        <p>Sistema de Gestión de Insumos e Impresiones</p>
+      </div>
+    </header>
+
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="tab-catalogo">Catálogo Imprimible</button>
+      <button class="tab-btn" data-tab="tab-inventario">Inventario Completo</button>
+      <button class="tab-btn" data-tab="tab-nuevo-carrete">Registrar Carrete</button>
+      <button class="tab-btn" data-tab="tab-nuevo-trabajo">Registrar Trabajo</button>
+      <button class="tab-btn" data-tab="tab-historial">Historial de Trabajos</button>
+    </nav>
+
+    <!-- Pestaña 1: Catálogo Adaptativo -->
+    <div id="tab-catalogo" class="tab-content active">
+      <div class="section-header">
+        <div>
+          <h2>Catálogo de Insumos Imprimibles</h2>
+          <p>Filamentos con stock disponible (>= 50g).</p>
+        </div>
+        <button onclick="window.print()" class="btn-tool">🖨️ Imprimir / Guardar PDF</button>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Imagen</th>
+              <th>#</th>
+              <th>Material</th>
+              <th>Color</th>
+              <th>Marca</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-catalogo">
+            <tr><td colspan="6" class="empty-state">Cargando catálogo...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pestaña 2: Inventario General -->
+    <div id="tab-inventario" class="tab-content">
+      <div class="section-header">
+        <div>
+          <h2>Inventario General de Filamento</h2>
+          <p>Lista completa, edición de stock y eliminación de carretes.</p>
+        </div>
+        <button onclick="window.print()" class="btn-tool">🖨️ Imprimir / Guardar PDF</button>
+      </div>
+      <div id="alert-inventario" class="alert-box"></div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Imagen</th>
+              <th>#</th>
+              <th>Marca</th>
+              <th>Material</th>
+              <th>Color</th>
+              <th>Stock Actual</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-inventario">
+            <tr><td colspan="8" class="empty-state">Cargando inventario...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pestaña 3: Formulario Carrete -->
+    <div id="tab-nuevo-carrete" class="tab-content">
+      <div class="section-header">
+        <div>
+          <h2>Registrar Nuevo Carrete de Filamento</h2>
+          <p>Añade un nuevo carrete al inventario general.</p>
+        </div>
+      </div>
+      <div id="alert-carrete" class="alert-box"></div>
+      <form id="form-carrete" class="form-grid">
+        <div class="form-group">
+          <label for="carrete-marca">Marca del Filamento</label>
+          <input type="text" id="carrete-marca" placeholder="Ej. Hatchbox, Elegoo, Sunlu" required>
+        </div>
+        <div class="form-group">
+          <label for="carrete-material">Tipo de Material</label>
+          <select id="carrete-material" required>
+            <option value="">-- Selecciona el tipo --</option>
+            <option value="PLA">PLA</option>
+            <option value="PETG">PETG</option>
+            <option value="ABS">ABS</option>
+            <option value="TPU">TPU</option>
+            <option value="ASA">ASA</option>
+            <option value="Otro">Otro...</option>
+          </select>
+        </div>
+        <!-- Campo personalizado si eligen "Otro" -->
+        <div class="form-group" id="group-material-custom" style="display: none;">
+          <label for="carrete-material-custom">Especificar Material</label>
+          <input type="text" id="carrete-material-custom" placeholder="Ej. HIPS, Nylon, PP...">
+        </div>
+        <div class="form-group">
+          <label for="carrete-color">Color</label>
+          <input type="text" id="carrete-color" placeholder="Ej. Negro, Blanco, Azul Translucido" required>
+        </div>
+        <div class="form-group">
+          <label for="carrete-peso">Masa Inicial Neto (Gramos)</label>
+          <input type="number" id="carrete-peso" step="0.1" placeholder="Ej. 1000" required>
+        </div>
+        <div class="form-group">
+          <label for="carrete-imagen">Fotografía del Carrete (Opcional)</label>
+          <input type="file" id="carrete-imagen" accept="image/*">
+        </div>
+        <button type="submit" class="btn-submit">Guardar Carrete</button>
+      </form>
+    </div>
+
+    <!-- Pestaña 4: Terminal de Impresión -->
+    <div id="tab-nuevo-trabajo" class="tab-content">
+      <div class="section-header">
+        <div>
+          <h2>Terminal de Impresión y Control de Faltante</h2>
+          <p>Registra un trabajo de impresión o una falla parcial para descontar stock.</p>
+        </div>
+      </div>
+      <div id="alert-trabajo" class="alert-box"></div>
+      <form id="form-trabajo" class="form-grid">
+        <div class="form-group">
+          <label for="trabajo-nombre">Nombre de la Pieza / Modelo</label>
+          <input type="text" id="trabajo-nombre" placeholder="Ej. Engranaje M3, Soporte de Cámara" required>
+        </div>
+        <div class="form-group">
+          <label for="trabajo-carrete">Seleccionar Carrete de Filamento</label>
+          <select id="trabajo-carrete" required>
+            <option value="">Cargando opciones...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="trabajo-peso">Masa Estimada por Slicer (Gramos)</label>
+          <input type="number" id="trabajo-peso" step="0.1" placeholder="Ej. 120.5" required>
+        </div>
+        <div class="form-group checkbox-group">
+          <input type="checkbox" id="trabajo-es-fallo">
+          <label for="trabajo-es-fallo">Si hubo un fallo, haz clic en esta casilla para descontar el filamento desperdiciado</label>
+        </div>
+        <div class="form-group" id="group-porcentaje-falla" style="display: none;">
+          <label for="trabajo-porcentaje">Porcentaje de Avance Antes de la Falla (%)</label>
+          <input type="number" id="trabajo-porcentaje" min="1" max="99" value="50">
+        </div>
+        <button type="submit" class="btn-submit">Procesar y Descontar Stock</button>
+      </form>
+    </div>
+
+    <!-- Pestaña 5: Historial de Trabajos -->
+    <div id="tab-historial" class="tab-content">
+      <div class="section-header">
+        <div>
+          <h2>Historial de Trabajos e Impresiones</h2>
+          <p>Registro completo de piezas impresas, consumo de filamento y eventos con fallas.</p>
+        </div>
+        <button onclick="window.print()" class="btn-tool">🖨️ Imprimir / Guardar PDF</button>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Pieza / Modelo</th>
+              <th>Filamento Utilizado</th>
+              <th>Masa Requerida</th>
+              <th>Consumo Real</th>
+              <th>Estado</th>
+              <th>Fecha y Hora</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-historial">
+            <tr><td colspan="7" class="empty-state">Cargando historial...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const API_BASE = 'http://localhost:3000/api';
+
+      // --- NAVEGACIÓN ENTRE PESTAÑAS ---
+      const tabButtons = document.querySelectorAll('.tab-btn');
+      const tabContents = document.querySelectorAll('.tab-content');
+
+      tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const targetTabId = button.getAttribute('data-tab');
+
+          tabButtons.forEach(btn => btn.classList.remove('active'));
+          tabContents.forEach(content => content.classList.remove('active'));
+
+          button.classList.add('active');
+          const targetElem = document.getElementById(targetTabId);
+          if (targetElem) targetElem.classList.add('active');
+
+          if (targetTabId === 'tab-catalogo') loadCatalogo();
+          if (targetTabId === 'tab-inventario') loadInventario();
+          if (targetTabId === 'tab-nuevo-trabajo') loadCarretesSelect();
+          if (targetTabId === 'tab-historial') loadHistorial();
+        });
+      });
+
+      // --- LÓGICA DE SELECTOR DE MATERIAL "OTRO" ---
+      const selectMaterial = document.getElementById('carrete-material');
+      const groupMaterialCustom = document.getElementById('group-material-custom');
+      const inputMaterialCustom = document.getElementById('carrete-material-custom');
+
+      if (selectMaterial && groupMaterialCustom) {
+        selectMaterial.addEventListener('change', (e) => {
+          if (e.target.value === 'Otro') {
+            groupMaterialCustom.style.display = 'flex';
+            inputMaterialCustom.setAttribute('required', 'true');
+          } else {
+            groupMaterialCustom.style.display = 'none';
+            inputMaterialCustom.removeAttribute('required');
+            inputMaterialCustom.value = '';
+          }
+        });
+      }
+
+      // --- LÓGICA DE MERMAS ---
+      const checkFallo = document.getElementById('trabajo-es-fallo');
+      const groupPorcentaje = document.getElementById('group-porcentaje-falla');
+
+      if (checkFallo && groupPorcentaje) {
+        checkFallo.addEventListener('change', (e) => {
+          groupPorcentaje.style.display = e.target.checked ? 'flex' : 'none';
+        });
+      }
+
+      // --- FUNCIONES API FETCH ---
+
+      // 1. Cargar Catálogo Imprimible
+      async function loadCatalogo() {
+        const tbody = document.getElementById('tbody-catalogo');
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Cargando catálogo...</td></tr>';
+
+        try {
+          const res = await fetch(`${API_BASE}/catalogo`);
+          if (!res.ok) throw new Error('Error al conectar con la API de catálogo');
+          const data = await res.json();
+
+          if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No hay insumos con stock suficiente (>= 50g).</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = data.map((item, index) => {
+            const imgFullUrl = item.imagen_url ? `http://localhost:3000${item.imagen_url}` : null;
+            const imgHtml = imgFullUrl 
+              ? `<img src="${imgFullUrl}" class="img-thumbnail" alt="Filamento" onerror="this.src='https://via.placeholder.com/36?text=Sin+Img'">` 
+              : `<span style="color:#94a3b8; font-size:0.75rem;">Sin img</span>`;
+
+            return `
+              <tr>
+                <td>${imgHtml}</td>
+                <td><strong>#${index + 1}</strong></td>
+                <td>${item.tipo_material || item.material || 'N/A'}</td>
+                <td>${item.color || 'N/A'}</td>
+                <td>${item.marca || 'N/A'}</td>
+                <td><span class="badge badge-disponible">${item.estado || 'Disponible'}</span></td>
+              </tr>
+            `;
+          }).join('');
+        } catch (err) {
+          tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="color:red">Error: ${err.message}</td></tr>`;
+        }
+      }
+
+      // 2. Cargar Inventario Completo con Acciones
+      async function loadInventario() {
+        const tbody = document.getElementById('tbody-inventario');
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Cargando inventario...</td></tr>';
+
+        try {
+          const res = await fetch(`${API_BASE}/carretes`);
+          if (!res.ok) throw new Error('Error al conectar con la API de inventario');
+          const data = await res.json();
+
+          if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No hay carretes registrados en el sistema.</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = data.map((item, index) => {
+            const rawStock = item.stock_actual_g ?? item.peso_actual_g ?? 0;
+            const peso = isNaN(parseFloat(rawStock)) ? 0 : parseFloat(rawStock);
+
+            let badge = '<span class="badge badge-disponible">Suficiente</span>';
+            if (peso < 50) badge = '<span class="badge badge-agotado">Crítico</span>';
+            else if (peso < 150) badge = '<span class="badge badge-bajo">Bajo</span>';
+
+            const imgFullUrl = item.imagen_url ? `http://localhost:3000${item.imagen_url}` : null;
+            const imgHtml = imgFullUrl 
+              ? `<img src="${imgFullUrl}" class="img-thumbnail" alt="Filamento" onerror="this.src='https://via.placeholder.com/36?text=Sin+Img'">` 
+              : `<span style="color:#94a3b8; font-size:0.75rem;">Sin img</span>`;
+
+            return `
+              <tr>
+                <td>${imgHtml}</td>
+                <td><strong>#${index + 1}</strong></td>
+                <td>${item.marca || 'N/A'}</td>
+                <td>${item.tipo_material || item.material || 'N/A'}</td>
+                <td>${item.color || 'N/A'}</td>
+                <td><strong>${peso.toFixed(2)} g</strong></td>
+                <td>${badge}</td>
+                <td>
+                  <button class="btn-action btn-edit" onclick="abrirModalEditar(${item.id}, ${peso}, ${index + 1})">Editar</button>
+                  <button class="btn-action btn-delete" onclick="eliminarCarrete(${item.id}, ${index + 1})">Eliminar</button>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        } catch (err) {
+          tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="color:red">Error: ${err.message}</td></tr>`;
+        }
+      }
+
+      // 3. Cargar Historial de Trabajos
+      async function loadHistorial() {
+        const tbody = document.getElementById('tbody-historial');
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Cargando historial de trabajos...</td></tr>';
+
+        try {
+          const res = await fetch(`${API_BASE}/trabajos`);
+          if (!res.ok) throw new Error('Error al conectar con la API de trabajos');
+          const data = await res.json();
+
+          if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No hay trabajos registrados en el historial.</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = data.map((item, index) => {
+            const esFallido = item.estado_trabajo === 'Fallido';
+            const badgeClase = esFallido ? 'badge-fallido' : 'badge-completado';
+            const marcaFilamento = item.marca ? `${item.marca} - ${item.tipo_material} (${item.color})` : 'Carrete Eliminado';
+            const consumoReal = item.masa_descontada_g ? `${parseFloat(item.masa_descontada_g).toFixed(2)} g` : `${parseFloat(item.masa_estimada_g).toFixed(2)} g`;
+            
+            let detalleEstado = item.estado_trabajo;
+            if (esFallido && item.porcentaje_falla) {
+              detalleEstado += ` (${item.porcentaje_falla}% avance)`;
+            }
+
+            return `
+              <tr>
+                <td><strong>#${data.length - index}</strong></td>
+                <td>${item.nombre_pieza}</td>
+                <td>${marcaFilamento}</td>
+                <td>${parseFloat(item.masa_estimada_g).toFixed(2)} g</td>
+                <td><strong>${consumoReal}</strong></td>
+                <td><span class="badge ${badgeClase}">${detalleEstado}</span></td>
+                <td>${item.fecha || 'N/A'}</td>
+              </tr>
+            `;
+          }).join('');
+        } catch (err) {
+          tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="color:red">Error: ${err.message}</td></tr>`;
+        }
+      }
+
+      // --- LÓGICA DEL MODAL DE EDICIÓN ---
+      let carreteEnEdicionId = null;
+
+      window.abrirModalEditar = (id, pesoActual, numVisual) => {
+        carreteEnEdicionId = id;
+        document.getElementById('modal-titulo').innerText = `Editar Carrete #${numVisual}`;
+        document.getElementById('modal-input-peso').value = pesoActual;
+        document.getElementById('modal-input-imagen').value = ''; 
+        document.getElementById('modal-editar').classList.add('active');
+      };
+
+      window.cerrarModalEditar = () => {
+        document.getElementById('modal-editar').classList.remove('active');
+        carreteEnEdicionId = null;
+      };
+
+      window.guardarEdicionCarrete = async () => {
+        if (!carreteEnEdicionId) return;
+
+        const nuevoPesoVal = document.getElementById('modal-input-peso').value;
+        const pesoNum = parseFloat(nuevoPesoVal);
+
+        if (isNaN(pesoNum) || pesoNum < 0) {
+          alert('Por favor ingrese un número válido mayor o igual a 0 para el peso.');
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('stock_actual_g', pesoNum);
+
+        const fileInput = document.getElementById('modal-input-imagen');
+        if (fileInput.files[0]) {
+          formData.append('imagen', fileInput.files[0]);
+        }
+
+        try {
+          const res = await fetch(`${API_BASE}/carretes/${carreteEnEdicionId}`, {
+            method: 'PUT',
+            body: formData
+          });
+
+          if (res.ok) {
+            alert('Carrete actualizado correctamente.');
+            cerrarModalEditar();
+            loadInventario();
+            loadCatalogo();
+          } else {
+            alert('Error al actualizar el carrete en el servidor.');
+          }
+        } catch (err) {
+          alert('Error de conexión al servidor.');
+        }
+      };
+
+      window.eliminarCarrete = async (id, numVisual) => {
+        if (!confirm(`¿Estás seguro de que deseas eliminar el carrete #${numVisual}? Esta acción eliminará también sus registros del historial asociados.`)) return;
+
+        try {
+          const res = await fetch(`${API_BASE}/carretes/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+
+          if (res.ok) {
+            alert(`Carrete #${numVisual} eliminado correctamente.`);
+            loadInventario();
+            loadCatalogo();
+          } else {
+            alert(data.error || 'No se pudo eliminar el carrete.');
+          }
+        } catch (err) {
+          alert('Error de conexión al servidor.');
+        }
+      };
+
+      // 4. Cargar Select de Carretes
+      async function loadCarretesSelect() {
+        const select = document.getElementById('trabajo-carrete');
+        if (!select) return;
+        select.innerHTML = '<option value="">Cargando opciones...</option>';
+
+        try {
+          const res = await fetch(`${API_BASE}/carretes`);
+          if (!res.ok) throw new Error('Error al obtener lista de carretes');
+          const data = await res.json();
+
+          if (!data || data.length === 0) {
+            select.innerHTML = '<option value="">No hay carretes disponibles</option>';
+            return;
+          }
+
+          select.innerHTML = '<option value="">-- Selecciona un carrete --</option>' +
+            data.map((c, index) => {
+              const rawStock = c.stock_actual_g ?? c.peso_actual_g ?? 0;
+              const stockNum = isNaN(parseFloat(rawStock)) ? 0 : parseFloat(rawStock);
+              const mat = c.tipo_material || c.material || '';
+              return `
+                <option value="${c.id}">
+                  #${index + 1} - ${c.marca} ${mat} (${c.color}) | Stock: ${stockNum.toFixed(2)}g
+                </option>
+              `;
+            }).join('');
+        } catch (err) {
+          select.innerHTML = '<option value="">Error al cargar carretes</option>';
+        }
+      }
+
+      // --- FORMULARIO 1: REGISTRAR CARRETE ---
+      const formCarrete = document.getElementById('form-carrete');
+      if (formCarrete) {
+        formCarrete.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const alertBox = document.getElementById('alert-carrete');
+          if (alertBox) alertBox.className = 'alert-box';
+
+          let tipoMaterialVal = selectMaterial.value;
+          if (tipoMaterialVal === 'Otro') {
+            tipoMaterialVal = inputMaterialCustom.value.trim();
+          }
+
+          const formData = new FormData();
+          formData.append('marca', document.getElementById('carrete-marca').value.trim());
+          formData.append('tipo_material', tipoMaterialVal);
+          formData.append('color', document.getElementById('carrete-color').value.trim());
+          formData.append('peso_inicial_g', parseFloat(document.getElementById('carrete-peso').value));
+
+          const fileInput = document.getElementById('carrete-imagen');
+          if (fileInput.files[0]) {
+            formData.append('imagen', fileInput.files[0]);
+          }
+
+          try {
+            const res = await fetch(`${API_BASE}/carretes`, {
+              method: 'POST',
+              body: formData
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+              if (alertBox) {
+                alertBox.className = 'alert-box success';
+                alertBox.innerHTML = `
+                  <div class="alert-title">✔ Carrete Registrado Correctamente</div>
+                  <p>El nuevo carrete se guardó con éxito en el sistema.</p>
+                `;
+              }
+              formCarrete.reset();
+              if (groupMaterialCustom) groupMaterialCustom.style.display = 'none';
+              loadInventario();
+              loadCatalogo();
+            } else {
+              throw new Error(data.error || 'Error al guardar el carrete');
+            }
+          } catch (err) {
+            if (alertBox) {
+              alertBox.className = 'alert-box danger';
+              alertBox.innerHTML = `
+                <div class="alert-title">❌ Error al Registrar</div>
+                <p>${err.message}</p>
+              `;
+            }
+          }
+        });
+      }
+
+      // --- FORMULARIO 2: REGISTRAR TRABAJO ---
+      const formTrabajo = document.getElementById('form-trabajo');
+      if (formTrabajo) {
+        formTrabajo.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const alertBox = document.getElementById('alert-trabajo');
+          if (alertBox) alertBox.className = 'alert-box';
+
+          const checkFalloElem = document.getElementById('trabajo-es-fallo');
+          const esFallo = checkFalloElem ? checkFalloElem.checked : false;
+          
+          const campoPeso = document.getElementById('trabajo-peso');
+          const pesoValor = campoPeso ? parseFloat(campoPeso.value) : 0;
+
+          const payload = {
+            carrete_id: parseInt(document.getElementById('trabajo-carrete').value),
+            nombre_pieza: document.getElementById('trabajo-nombre').value.trim(),
+            masa_estimada_g: pesoValor,
+            es_fallo: esFallo,
+            porcentaje_falla: esFallo ? parseFloat(document.getElementById('trabajo-porcentaje').value) : null
+          };
+
+          try {
+            const res = await fetch(`${API_BASE}/trabajos`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || data.exito === false) {
+              if (data.faltante_g !== undefined) {
+                const stock = data.stock_disponible_g ?? data.disponible_g ?? 0;
+                const req = data.masa_requerida_g ?? payload.masa_estimada_g;
+                const faltante = data.faltante_g;
+                const nombreCarrete = data.carrete ? ` (${data.carrete})` : '';
+
+                if (alertBox) {
+                  alertBox.className = 'alert-box danger';
+                  alertBox.innerHTML = `
+                    <div class="alert-title">⚠️ Stock Insuficiente en Carrete Seleccionado${nombreCarrete}</div>
+                    <p>No se puede procesar la impresión porque el peso solicitado excede el stock disponible.</p>
+                    <div class="alert-details">
+                      <div class="alert-metric">
+                        <span class="alert-metric-title">Disponible</span>
+                        <span class="alert-metric-value">${stock} g</span>
+                      </div>
+                      <div class="alert-metric">
+                        <span class="alert-metric-title">Requerido</span>
+                        <span class="alert-metric-value">${req} g</span>
+                      </div>
+                      <div class="alert-metric">
+                        <span class="alert-metric-title">Cantidad Faltante</span>
+                        <span class="alert-metric-value highlight-faltante">-${faltante} g</span>
+                      </div>
+                    </div>
+                  `;
+                }
+              } else {
+                throw new Error(data.error || data.mensaje || 'No se pudo completar el registro del trabajo');
+              }
+            } else {
+              if (alertBox) {
+                alertBox.className = 'alert-box success';
+                alertBox.innerHTML = `
+                  <div class="alert-title">✔ Trabajo Registrado con Éxito</div>
+                  <p>Se descontaron ${data.masa_descontada_g || payload.masa_estimada_g}g del carrete seleccionado.</p>
+                `;
+              }
+              formTrabajo.reset();
+              if (groupPorcentaje) groupPorcentaje.style.display = 'none';
+              
+              loadCarretesSelect();
+              loadCatalogo();
+            }
+          } catch (err) {
+            if (alertBox) {
+              alertBox.className = 'alert-box danger';
+              alertBox.innerHTML = `
+                <div class="alert-title">❌ Error de Servidor</div>
+                <p>${err.message}</p>
+              `;
+            }
+          }
+        });
+      }
+
+      // Carga inicial explícita
+      loadCatalogo();
+    });
+  </script>
+</body>
+</html>
